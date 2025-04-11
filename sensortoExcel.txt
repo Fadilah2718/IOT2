@@ -1,0 +1,89 @@
+[
+    {
+    },
+    {
+    },
+    {
+    },
+    {
+        "id": "c5582784e974edfd",
+        "type": "tab",
+        "label": "Flow 5",
+        "disabled": false,
+        "info": "",
+        "env": []
+        "id": "4f5205926448efce",
+        "type": "debug",
+        "z": "c5582784e974edfd",
+        "name": "debug 5",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 980,
+        "y": 440,
+        "wires": []
+        "id": "ea7339f45d2a6fb6",
+        "type": "rpi-srf",
+        "z": "c5582784e974edfd",
+        "name": "",
+        "topic": "SRF",
+        "pulse": "1",
+        "pins": "11,7",
+        "precision": "1",
+        "x": 410,
+        "y": 260,
+        "wires": [
+            [
+                "4f5205926448efce",
+                "8866f50dfcbd93f8"
+            ]
+        ]
+        "id": "f36e8dcd9d2061e3",
+        "type": "file",
+        "z": "c5582784e974edfd",
+        "name": "",
+        "filename": "/home/pi/Desktop/logs.csv",
+        "filenameType": "str",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 1110,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "8866f50dfcbd93f8",
+        "type": "function",
+        "z": "c5582784e974edfd",
+        "name": "function 3",
+        "func": "var val = msg.payload;\n\nfunction checkValue(value) {\n    let aval;\n\n    if (typeof 
+value === 'number' && !isNaN(value)) {\n        if (value > 100) {\n            aval = \"available\";\n    
+} else {\n            aval = \"not available\";\n
+        }\n    }\n\n    return aval;\n}\nconst currentDate = 
+new Date();\nconst date = currentDate.toLocaleDateString();\nconst time = 
+currentDate.toLocaleTimeString();\n\nvar ts = date+\" \"+time;\nvar status = checkValue(val);\n\
+ nmsg.payload = ts+\",\"+status+\",\"+val;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 620,
+        "y": 240,
+        "wires": [
+            [
+                "f36e8dcd9d2061e3",
+                "4f5205926448efce"
+            ]
+        ]
+    }
+ ]
+
