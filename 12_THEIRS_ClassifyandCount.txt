@@ -1,0 +1,417 @@
+[
+    {
+        "id": "ae47a8b101c1c54a",
+        "type": "tab",
+        "label": "CH-06",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "de2ee7815b95d18a",
+        "type": "inject",
+        "z": "ae47a8b101c1c54a",
+        "name": "inject",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 110,
+        "y": 120,
+        "wires": [
+            [
+                "bc6adef7ca80fb64"
+            ]
+        ]
+    },
+    {
+        "id": "bc6adef7ca80fb64",
+        "type": "function",
+        "z": "ae47a8b101c1c54a",
+        "name": "Random Value Generation",
+        "func": "msg.payload = [];\n\n// Define status ranges (used ONLY by the classify function now)\nconst ranges = {\n    Normal:    { Vibration: [20, 40], Temperature: [40, 60], Current: [1, 4], RPM: [2200, 3000], TimeOperated: [0, 200] },\n    Warning:   { Vibration: [40.1, 60], Temperature: [61, 80], Current: [4.1, 7], RPM: [1600, 2199], TimeOperated: [201, 350] },\n    Critical:  { Vibration: [60.1, 80], Temperature: [81, 100], Current: [7.1, 10], RPM: [1000, 1599], TimeOperated: [351, 500] }\n};\n\n// Define OVERALL ranges for random generation, encompassing all categories\nconst overallRanges = {\n    Vibration: [20, 80],       // Min Normal to Max Critical\n    Temperature: [40, 100],    // Min Normal to Max Critical\n    Current: [1, 10],        // Min Normal to Max Critical\n    RPM: [1000, 3000],       // Min Critical to Max Normal\n    TimeOperated: [0, 500]     // Min Normal to Max Critical\n};\n\n// Classification function - checks which defined range the values fall into\nconst classify = (v, t, c, rpm, time) => {\n    // Check Normal range\n    if (v >= ranges.Normal.Vibration[0] && v <= ranges.Normal.Vibration[1] &&\n        t >= ranges.Normal.Temperature[0] && t <= ranges.Normal.Temperature[1] &&\n        c >= ranges.Normal.Current[0] && c <= ranges.Normal.Current[1] &&\n        rpm >= ranges.Normal.RPM[0] && rpm <= ranges.Normal.RPM[1] &&\n        time >= ranges.Normal.TimeOperated[0] && time <= ranges.Normal.TimeOperated[1]) {\n        return \"Normal\";\n    }\n    // Check Warning range\n    else if (v >= ranges.Warning.Vibration[0] && v <= ranges.Warning.Vibration[1] &&\n             t >= ranges.Warning.Temperature[0] && t <= ranges.Warning.Temperature[1] &&\n             c >= ranges.Warning.Current[0] && c <= ranges.Warning.Current[1] &&\n             rpm >= ranges.Warning.RPM[0] && rpm <= ranges.Warning.RPM[1] &&\n             time >= ranges.Warning.TimeOperated[0] && time <= ranges.Warning.TimeOperated[1]) {\n        return \"Warning\";\n    }\n    // Check Critical range\n    else if (v >= ranges.Critical.Vibration[0] && v <= ranges.Critical.Vibration[1] &&\n             t >= ranges.Critical.Temperature[0] && t <= ranges.Critical.Temperature[1] &&\n             c >= ranges.Critical.Current[0] && c <= ranges.Critical.Current[1] &&\n             rpm >= ranges.Critical.RPM[0] && rpm <= ranges.Critical.RPM[1] &&\n             time >= ranges.Critical.TimeOperated[0] && time <= ranges.Critical.TimeOperated[1]) {\n        return \"Critical\";\n    }\n    // If none of the above match, it's Unclassified\n    else {\n        return \"Unclassified\";\n    }\n};\n\nlet counts = { Normal: 0, Warning: 0, Critical: 0, Unclassified: 0 };\n\n// Generate 500 data points using OVERALL ranges\nfor (let i = 0; i < 500; i++) {\n    // Generate random values across the *entire* possible spectrum\n    const vibration = +(Math.random() * (overallRanges.Vibration[1] - overallRanges.Vibration[0]) + overallRanges.Vibration[0]).toFixed(1);\n    const temp = Math.floor(Math.random() * (overallRanges.Temperature[1] - overallRanges.Temperature[0] + 1) + overallRanges.Temperature[0]);\n    const current = +(Math.random() * (overallRanges.Current[1] - overallRanges.Current[0]) + overallRanges.Current[0]).toFixed(1);\n    const rpm = Math.floor(Math.random() * (overallRanges.RPM[1] - overallRanges.RPM[0] + 1) + overallRanges.RPM[0]);\n    const time = Math.floor(Math.random() * (overallRanges.TimeOperated[1] - overallRanges.TimeOperated[0] + 1) + overallRanges.TimeOperated[0]);\n\n    // Classify the *generated* data based on the defined ranges\n    const status = classify(vibration, temp, current, rpm, time);\n\n    // Increment the count for the *actual* classified status\n    if (counts[status] !== undefined) { // Check if status is one of the keys we are tracking\n         counts[status]++;\n    } else {\n         // This should ideally not happen if classify handles all cases, but good for debugging\n         node.warn(\"Unexpected status generated: \" + status + \" for values: \" + JSON.stringify({vibration, temp, current, rpm, time}));\n         counts.Unclassified++; // Still count it as unclassified\n    }\n\n    msg.payload.push({\n        \"Motor ID\": \"M0\" + (1 + Math.floor(Math.random() * 5)),\n        \"Vibration (Hz)\": vibration,\n        \"Temperature (°C)\": temp,\n        \"Current (A)\": current,\n        \"RPM\": rpm,\n        \"Time Operated (h)\": time,\n        // Failure logic remains based on *classified* status and specific thresholds\n        \"Failure\": (status === \"Critical\" && (vibration > 75 || temp > 95 || current > 9)) ? \"Yes\" : \"No\",\n        // Use the *classified* status here\n        \"Status\": status\n    });\n}\n\nmsg.counts = counts; // Attach the final counts\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 120,
+        "wires": [
+            [
+                "fb8fc834ffb656b5"
+            ]
+        ]
+    },
+    {
+        "id": "3544d9444e6e2313",
+        "type": "file",
+        "z": "ae47a8b101c1c54a",
+        "name": "write in file",
+        "filename": "C:/Users/Fadilah Thasnim/Desktop/Academics/8 - Semester/1. IOT/Lab/UploadMaterial/motor_status.csv",
+        "filenameType": "str",
+        "appendNewline": true,
+        "createDir": true,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 690,
+        "y": 120,
+        "wires": [
+            [
+                "029563977fefcffe"
+            ]
+        ]
+    },
+    {
+        "id": "fb8fc834ffb656b5",
+        "type": "csv",
+        "z": "ae47a8b101c1c54a",
+        "name": "",
+        "spec": "rfc",
+        "sep": ",",
+        "hdrin": true,
+        "hdrout": "once",
+        "multi": "one",
+        "ret": "\\r\\n",
+        "temp": "\"Motor ID\",\"Vibration (Hz)\",\"Temperature (°C)\",\"Current (A)\",\"RPM\",\"Time Operated (h)\",\"Failure\",\"Status\"",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": true,
+        "include_null_values": true,
+        "x": 530,
+        "y": 120,
+        "wires": [
+            [
+                "3544d9444e6e2313"
+            ]
+        ]
+    },
+    {
+        "id": "029563977fefcffe",
+        "type": "debug",
+        "z": "ae47a8b101c1c54a",
+        "name": "debug ",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 850,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "1242a42935bac397",
+        "type": "inject",
+        "z": "ae47a8b101c1c54a",
+        "name": "inject",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 110,
+        "y": 320,
+        "wires": [
+            [
+                "61bd3f6e43f8c0ae"
+            ]
+        ]
+    },
+    {
+        "id": "61bd3f6e43f8c0ae",
+        "type": "file in",
+        "z": "ae47a8b101c1c54a",
+        "name": "read dataset",
+        "filename": "C:/Users/Fadilah Thasnim/Desktop/Academics/8 - Semester/1. IOT/Lab/UploadMaterial/motor_status.csv",
+        "filenameType": "str",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "allProps": false,
+        "x": 270,
+        "y": 320,
+        "wires": [
+            [
+                "02868040836fe679"
+            ]
+        ]
+    },
+    {
+        "id": "02868040836fe679",
+        "type": "csv",
+        "z": "ae47a8b101c1c54a",
+        "name": "csv",
+        "sep": ",",
+        "hdrin": true,
+        "hdrout": "none",
+        "multi": "mult",
+        "ret": "\\n",
+        "temp": "",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": false,
+        "include_null_values": false,
+        "x": 430,
+        "y": 320,
+        "wires": [
+            [
+                "2f41c3e33ab2f646"
+            ]
+        ]
+    },
+    {
+        "id": "2f41c3e33ab2f646",
+        "type": "function",
+        "z": "ae47a8b101c1c54a",
+        "name": "classify and count Status",
+        "func": "let counts = { Normal: 0, Warning: 0, Critical: 0 };\n\nfunction classify(row) {\n    const v = row[\"Vibration (Hz)\"];\n    const t = row[\"Temperature (°C)\"];\n    const c = row[\"Current (A)\"];\n    const rpm = row[\"RPM\"];\n    const time = row[\"Time Operated (h)\"];\n\n    if (v >= 20 && v <= 40 && t >= 40 && t <= 60 && c >= 1 && c <= 4 && rpm >= 2200 && rpm <= 3000 && time >= 0 && time <= 200) {\n        counts.Normal++;\n        return \"Normal\";\n    } else if (v > 40 && v <= 60 && t >= 61 && t <= 80 && c > 4 && c <= 7 && rpm >= 1600 && rpm <= 2199 && time >= 201 && time <= 350) {\n        counts.Warning++;\n        return \"Warning\";\n    } else if (v > 60 && v <= 80 && t >= 81 && t <= 100 && c > 7 && c <= 10 && rpm >= 1000 && rpm <= 1599 && time >= 351 && time <= 500) {\n        counts.Critical++;\n        return \"Critical\";\n    } else {\n        return \"Unclassified\";\n    }\n}\n\nmsg.payload = msg.payload.map(row => {\n    row[\"Status\"] = classify(row);\n    return row;\n});\n\nmsg.counts = counts;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 630,
+        "y": 320,
+        "wires": [
+            [
+                "715f5f5dfdbd1234",
+                "336c74ce2d1669cb"
+            ]
+        ]
+    },
+    {
+        "id": "715f5f5dfdbd1234",
+        "type": "ui_template",
+        "z": "ae47a8b101c1c54a",
+        "group": "3eb5c9339c109e73",
+        "name": "",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "format": "<div style=\"font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\">\n\n    <!-- Status Legend -->\n    <div style=\"margin-bottom: 10px;\">\n        <span style=\"background:#c8e6c9; padding:4px 10px; border-radius:4px; margin-right:5px;\">Normal</span>\n        <span style=\"background:#ffeb3b; padding:4px 10px; border-radius:4px; margin-right:5px;\">Warning</span>\n        <span style=\"background:#ff9800; padding:4px 10px; border-radius:4px; margin-right:5px;\">Critical</span>\n        <span style=\"background:#f44336; color:white; padding:4px 10px; border-radius:4px;\">Failure</span>\n    </div>\n\n    <!-- Data Table -->\n    <table\n        style=\"width:100%; border-collapse: collapse; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden;\">\n        <thead>\n            <tr style=\"background:#333; color:white;\">\n                <th style=\"padding:12px;\">Motor ID</th>\n                <th style=\"padding:12px;\">Vibration (Hz)</th>\n                <th style=\"padding:12px;\">Temperature (°C)</th>\n                <th style=\"padding:12px;\">Current (A)</th>\n                <th style=\"padding:12px;\">RPM</th>\n                <th style=\"padding:12px;\">Time Operated (h)</th>\n                <th style=\"padding:12px;\">Failure</th>\n                <th style=\"padding:12px;\">Status</th>\n            </tr>\n        </thead>\n        <tbody>\n            <tr ng-repeat=\"row in msg.payload\" ng-style=\"{\n                'background-color': row['Failure'] === 'Yes' ? '#f44336' : \n                                    row['Status'] === 'Critical' ? '#ffcc80' : \n                                    row['Status'] === 'Warning' ? '#fff9c4' : \n                                    row['Status'] === 'Normal' ? '#e8f5e9' : \n                                    'white',\n                'color': row['Failure'] === 'Yes' ? 'white' : 'black'\n            }\" style=\"transition: background-color 0.3s;\">\n                <td style=\"padding:10px;\">{{row[\"Motor ID\"]}}</td>\n                <td style=\"padding:10px;\">{{row[\"Vibration (Hz)\"]}}</td>\n                <td style=\"padding:10px;\">{{row[\"Temperature (°C)\"]}}</td>\n                <td style=\"padding:10px;\">{{row[\"Current (A)\"]}}</td>\n                <td style=\"padding:10px;\">{{row[\"RPM\"]}}</td>\n                <td style=\"padding:10px;\">{{row[\"Time Operated (h)\"]}}</td>\n                <td style=\"padding:10px;\">{{row[\"Failure\"]}}</td>\n                <td style=\"padding:10px;\">{{row[\"Status\"]}}</td>\n            </tr>\n        </tbody>\n    </table>\n</div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 840,
+        "y": 280,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5e0e370f7c492f3c",
+        "type": "ui_template",
+        "z": "ae47a8b101c1c54a",
+        "group": "8b67988ebd135c31",
+        "name": "",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "format": "<style>\n    .status-box {\n        padding: 10px;\n        margin: 10px 0;\n        border-radius: 10px;\n        background: #f9f9f9;\n        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);\n    }\n\n    .motor-id {\n        font-weight: bold;\n        font-size: 1.1em;\n        margin-bottom: 5px;\n    }\n\n    .tag {\n        display: inline-block;\n        padding: 4px 8px;\n        margin-right: 8px;\n        border-radius: 5px;\n        font-size: 0.9em;\n        color: white;\n    }\n\n    .normal {\n        background: green;\n    }\n\n    .warning {\n        background: orange;\n    }\n\n    .critical {\n        background: red;\n    }\n</style>\n\n<div ng-repeat=\"item in msg.payload\" class=\"status-box\">\n    <div class=\"motor-id\">{{item[\"Motor ID\"]}}</div>\n    <div>\n        <span class=\"tag normal\">Normal: {{item.Normal}}</span>\n        <span class=\"tag warning\">Warning: {{item.Warning}}</span>\n        <span class=\"tag critical\">Critical: {{item.Critical}}</span>\n    </div>\n</div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 840,
+        "y": 440,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "336c74ce2d1669cb",
+        "type": "function",
+        "z": "ae47a8b101c1c54a",
+        "name": "show count per motor",
+        "func": "let statusCounts = {};\n\nmsg.payload.forEach(row => {\n    let id = row[\"Motor ID\"];\n    let status = row[\"Status\"];\n\n    if (!statusCounts[id]) {\n        statusCounts[id] = { \"Normal\": 0, \"Warning\": 0, \"Critical\": 0 };\n    }\n\n    statusCounts[id][status]++;\n});\n\nmsg.payload = Object.entries(statusCounts).map(([motorId, counts]) => ({\n    \"Motor ID\": motorId,\n    ...counts\n}));\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 880,
+        "y": 360,
+        "wires": [
+            [
+                "5e0e370f7c492f3c"
+            ]
+        ]
+    },
+    {
+        "id": "0ef5ba5c16af5d1f",
+        "type": "inject",
+        "z": "ae47a8b101c1c54a",
+        "name": "Trigger Simulation",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 210,
+        "y": 440,
+        "wires": [
+            [
+                "e569a49e187f933d"
+            ]
+        ]
+    },
+    {
+        "id": "e569a49e187f933d",
+        "type": "function",
+        "z": "ae47a8b101c1c54a",
+        "name": "Generate Random Motor Data",
+        "func": "msg.payload = [];\n\nconst ranges = {\n    Normal:    { Vibration: [20, 40], Temperature: [40, 60], Current: [1, 4], RPM: [2200, 3000], TimeOperated: [0, 200] },\n    Warning:   { Vibration: [40.1, 60], Temperature: [61, 80], Current: [4.1, 7], RPM: [1600, 2199], TimeOperated: [201, 350] },\n    Critical:  { Vibration: [60.1, 80], Temperature: [81, 100], Current: [7.1, 10], RPM: [1000, 1599], TimeOperated: [351, 500] }\n};\n\nconst overallRanges = {\n    Vibration: [20, 80],\n    Temperature: [40, 100],\n    Current: [1, 10],\n    RPM: [1000, 3000],\n    TimeOperated: [0, 500]\n};\n\nconst classify = (v, t, c, rpm, time) => {\n    if (v >= ranges.Normal.Vibration[0] && v <= ranges.Normal.Vibration[1] &&\n        t >= ranges.Normal.Temperature[0] && t <= ranges.Normal.Temperature[1] &&\n        c >= ranges.Normal.Current[0] && c <= ranges.Normal.Current[1] &&\n        rpm >= ranges.Normal.RPM[0] && rpm <= ranges.Normal.RPM[1] &&\n        time >= ranges.Normal.TimeOperated[0] && time <= ranges.Normal.TimeOperated[1]) {\n        return \"Normal\";\n    } else if (v >= ranges.Warning.Vibration[0] && v <= ranges.Warning.Vibration[1] &&\n               t >= ranges.Warning.Temperature[0] && t <= ranges.Warning.Temperature[1] &&\n               c >= ranges.Warning.Current[0] && c <= ranges.Warning.Current[1] &&\n               rpm >= ranges.Warning.RPM[0] && rpm <= ranges.Warning.RPM[1] &&\n               time >= ranges.Warning.TimeOperated[0] && time <= ranges.Warning.TimeOperated[1]) {\n        return \"Warning\";\n    } else if (v >= ranges.Critical.Vibration[0] && v <= ranges.Critical.Vibration[1] &&\n               t >= ranges.Critical.Temperature[0] && t <= ranges.Critical.Temperature[1] &&\n               c >= ranges.Critical.Current[0] && c <= ranges.Critical.Current[1] &&\n               rpm >= ranges.Critical.RPM[0] && rpm <= ranges.Critical.RPM[1] &&\n               time >= ranges.Critical.TimeOperated[0] && time <= ranges.Critical.TimeOperated[1]) {\n        return \"Critical\";\n    } else {\n        return \"Unclassified\";\n    }\n};\n\nlet counts = { Normal: 0, Warning: 0, Critical: 0, Unclassified: 0 };\n\nfor (let i = 0; i < 500; i++) {\n    const vibration = +(Math.random() * (overallRanges.Vibration[1] - overallRanges.Vibration[0]) + overallRanges.Vibration[0]).toFixed(1);\n    const temp = Math.floor(Math.random() * (overallRanges.Temperature[1] - overallRanges.Temperature[0] + 1) + overallRanges.Temperature[0]);\n    const current = +(Math.random() * (overallRanges.Current[1] - overallRanges.Current[0]) + overallRanges.Current[0]).toFixed(1);\n    const rpm = Math.floor(Math.random() * (overallRanges.RPM[1] - overallRanges.RPM[0] + 1) + overallRanges.RPM[0]);\n    const time = Math.floor(Math.random() * (overallRanges.TimeOperated[1] - overallRanges.TimeOperated[0] + 1) + overallRanges.TimeOperated[0]);\n\n    const status = classify(vibration, temp, current, rpm, time);\n\n    if (counts[status] !== undefined) {\n        counts[status]++;\n    } else {\n        counts.Unclassified++;\n    }\n\n    msg.payload.push({\n        \"Motor ID\": \"M0\" + (1 + Math.floor(Math.random() * 5)),\n        \"Vibration (Hz)\": vibration,\n        \"Temperature (°C)\": temp,\n        \"Current (A)\": current,\n        \"RPM\": rpm,\n        \"Time Operated (h)\": time,\n        \"Failure\": (status === \"Critical\" && (vibration > 75 || temp > 95 || current > 9)) ? \"Yes\" : \"No\",\n        \"Status\": status\n    });\n}\n\nmsg.counts = counts;\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 520,
+        "wires": [
+            [
+                "8415783b5c5f2dd8"
+            ]
+        ]
+    },
+    {
+        "id": "8415783b5c5f2dd8",
+        "type": "csv",
+        "z": "ae47a8b101c1c54a",
+        "name": "Convert to CSV",
+        "sep": ",",
+        "hdrin": true,
+        "hdrout": "once",
+        "multi": "one",
+        "ret": "\\r\\n",
+        "temp": "\"Motor ID\",\"Vibration (Hz)\",\"Temperature (°C)\",\"Current (A)\",\"RPM\",\"Time Operated (h)\",\"Failure\",\"Status\"",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": false,
+        "include_null_values": false,
+        "x": 460,
+        "y": 600,
+        "wires": [
+            [
+                "1156ea6c6cd70646"
+            ]
+        ]
+    },
+    {
+        "id": "1156ea6c6cd70646",
+        "type": "file",
+        "z": "ae47a8b101c1c54a",
+        "name": "Write to CSV File",
+        "filename": "C:/Users/Fadilah Thasnim/Desktop/Academics/8 - Semester/1. IOT/Lab/UploadMaterial/motor_status.csv",
+        "filenameType": "str",
+        "appendNewline": true,
+        "createDir": true,
+        "overwriteFile": "true",
+        "encoding": "utf8",
+        "x": 610,
+        "y": 680,
+        "wires": [
+            [
+                "59adc277bbf53caa"
+            ]
+        ]
+    },
+    {
+        "id": "59adc277bbf53caa",
+        "type": "debug",
+        "z": "ae47a8b101c1c54a",
+        "name": "Show Output",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 730,
+        "y": 760,
+        "wires": []
+    },
+    {
+        "id": "a338a80e04e9ebfc",
+        "type": "ui_spacer",
+        "z": "ae47a8b101c1c54a",
+        "name": "spacer",
+        "group": "8b67988ebd135c31",
+        "order": 1,
+        "width": "5",
+        "height": "1"
+    },
+    {
+        "id": "3eb5c9339c109e73",
+        "type": "ui_group",
+        "name": "table",
+        "tab": "8b4b57d564e0939e",
+        "order": 2,
+        "disp": false,
+        "width": 15,
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "8b67988ebd135c31",
+        "type": "ui_group",
+        "name": "count",
+        "tab": "8b4b57d564e0939e",
+        "order": 1,
+        "disp": false,
+        "width": 7,
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "8b4b57d564e0939e",
+        "type": "ui_tab",
+        "name": "CH-06",
+        "icon": "dashboard",
+        "order": 4,
+        "disabled": false,
+        "hidden": false
+    }
+]
