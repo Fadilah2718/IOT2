@@ -1,0 +1,119 @@
+[
+    {
+        "id": "c91a0f5c442c994b",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "2bb942c49e488800",
+        "type": "function",
+        "z": "c91a0f5c442c994b",
+        "name": "display 1006",
+        "func": "var timestamp = new Date().toISOString();  \nmsg.payload = {\n    timestamp: timestamp,\n    detected: msg.payload \n};\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 590,
+        "y": 180,
+        "wires": [
+            [
+                "889d656eda7fd308",
+                "debaf70a0ca30372"
+            ]
+        ]
+    },
+    {
+        "id": "889d656eda7fd308",
+        "type": "debug",
+        "z": "c91a0f5c442c994b",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 800,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "4c7c88a89faa3a20",
+        "type": "inject",
+        "z": "c91a0f5c442c994b",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "0.5",
+        "topic": "",
+        "payload": "iso",
+        "payloadType": "date",
+        "x": 220,
+        "y": 180,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "debaf70a0ca30372",
+        "type": "file",
+        "z": "c91a0f5c442c994b",
+        "name": "WriteLogFile",
+        "filename": "/home/pi/Documents/21mis1006/logfile.txt",
+        "filenameType": "str",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "false",
+        "encoding": "utf8",
+        "x": 810,
+        "y": 260,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5b27d155c792a060",
+        "type": "rpi-gpio in",
+        "z": "c91a0f5c442c994b",
+        "name": "",
+        "pin": "21",
+        "intype": "tri",
+        "debounce": "25",
+        "read": false,
+        "bcm": true,
+        "x": 390,
+        "y": 180,
+        "wires": [
+            [
+                "2bb942c49e488800"
+            ]
+        ]
+    },
+    {
+        "id": "fcc2e4ad9c21564a",
+        "type": "comment",
+        "z": "c91a0f5c442c994b",
+        "name": "Fadilah 21MIS1006",
+        "info": "",
+        "x": 250,
+        "y": 80,
+        "wires": []
+    }
+]

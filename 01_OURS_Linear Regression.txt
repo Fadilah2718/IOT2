@@ -1,0 +1,219 @@
+[
+    {
+        "id": "3404bcdfb7e0822b",
+        "type": "tab",
+        "label": "Linear Regression",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "e6377efccd5b5feb",
+        "type": "inject",
+        "z": "3404bcdfb7e0822b",
+        "name": "Inject Data 1006",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "",
+        "topic": "",
+        "payload": "{\"x\": [3, 9, 5, 3], \"y\": [8, 6, 4, 2]}",
+        "payloadType": "json",
+        "x": 230,
+        "y": 140,
+        "wires": [
+            [
+                "811c2834e3b5fb0c"
+            ]
+        ]
+    },
+    {
+        "id": "811c2834e3b5fb0c",
+        "type": "function",
+        "z": "3404bcdfb7e0822b",
+        "name": "Calculate Linear Regression 1006",
+        "func": "function linearRegression(x, y) {\n    let n = x.length;\n    let sumX = x.reduce((a, b) => a + b, 0);\n    let sumY = y.reduce((a, b) => a + b, 0);\n    let sumXY = x.map((xi, i) => xi * y[i]).reduce((a, b) => a + b, 0);\n    let sumX2 = x.map(xi => xi * xi).reduce((a, b) => a + b, 0);\n\n    let slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);\n    let intercept = (sumY - slope * sumX) / n;\n    \n    return { slope, intercept };\n}\n\nlet data = msg.payload;\nlet result = linearRegression(data.x, data.y);\n\n// Generate Regression Line Points\nlet regressionPoints = data.x.map(xi => ({ x: xi, y: result.slope * xi + result.intercept }));\n\nmsg.payload = [\n    {\n        \"series\": [\"Original\"],\n        \"data\": [data.x.map((xi, i) => ({ x: xi, y: data.y[i] }))],\n        \"labels\": data.x\n    },\n    {\n        \"series\": [\"Regression\"],\n        \"data\": [regressionPoints],\n        \"labels\": data.x\n    }\n];\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 420,
+        "y": 220,
+        "wires": [
+            [
+                "7a17c136a1d7edc4",
+                "3ed9cf6db7e16bfa"
+            ]
+        ]
+    },
+    {
+        "id": "7a17c136a1d7edc4",
+        "type": "ui_chart",
+        "z": "3404bcdfb7e0822b",
+        "name": "Display Chart",
+        "group": "8f7g6h5i.9876",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "label": "Linear Regression Chart 1006",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "auto",
+        "interpolate": "linear",
+        "nodata": "Waiting for data...",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "10",
+        "removeOlder": "5",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#ff0000",
+            "#0000ff",
+            "#000000",
+            "#000000",
+            "#000000",
+            "#000000",
+            "#000000",
+            "#000000",
+            "#000000"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 720,
+        "y": 280,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "3ed9cf6db7e16bfa",
+        "type": "debug",
+        "z": "3404bcdfb7e0822b",
+        "name": "debug 11",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 700,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "8f7g6h5i.9876",
+        "type": "ui_group",
+        "name": "Charts",
+        "tab": "9j8k7l6m.6543",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "9j8k7l6m.6543",
+        "type": "ui_tab",
+        "name": "Dashboard",
+        "icon": "dashboard",
+        "order": 1
+    }
+]
+
+
+========================================================================================
+
+
+Assuming you're using a DHT11 or DHT22 sensor (common for temp & humidity), and you've already installed the necessary GPIO or exec nodes, follow these steps:
+
+teps to Modify the Flow
+1. Use GPIO or Exec Node to Read Sensor Data
+Use rpi-dht22 node if available, or
+
+Use exec node to run a Python script that reads DHT data via Adafruit_DHT library.
+
+{
+  "temperature": 27,
+  "humidity": 65
+}
+
+
+Function Node 
+
+// Initialize context storage
+let tempArray = context.get("tempArray") || [];
+let humidArray = context.get("humidArray") || [];
+
+// Get current reading
+let temp = msg.payload.temperature;
+let humid = msg.payload.humidity;
+
+// Push the new reading
+tempArray.push(temp);
+humidArray.push(humid);
+
+// Keep only the last 20 readings
+if (tempArray.length > 20) {
+    tempArray.shift();
+    humidArray.shift();
+}
+
+// Store back in context
+context.set("tempArray", tempArray);
+context.set("humidArray", humidArray);
+
+// Linear Regression Function
+function linearRegression(x, y) {
+    let n = x.length;
+    let sumX = x.reduce((a, b) => a + b, 0);
+    let sumY = y.reduce((a, b) => a + b, 0);
+    let sumXY = x.map((xi, i) => xi * y[i]).reduce((a, b) => a + b, 0);
+    let sumX2 = x.map(xi => xi * xi).reduce((a, b) => a + b, 0);
+
+    let slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    let intercept = (sumY - slope * sumX) / n;
+
+    return { slope, intercept };
+}
+
+// If not enough data yet, wait
+if (tempArray.length < 2) {
+    return null;
+}
+
+let result = linearRegression(tempArray, humidArray);
+
+// Generate Regression Line Points
+let regressionPoints = tempArray.map(t => ({
+    x: t,
+    y: result.slope * t + result.intercept
+}));
+
+// Format for chart
+msg.payload = [
+    {
+        series: ["Original"],
+        data: [tempArray.map((t, i) => ({ x: t, y: humidArray[i] }))],
+        labels: tempArray
+    },
+    {
+        series: ["Regression"],
+        data: [regressionPoints],
+        labels: tempArray
+    }
+];
+
+return msg;
+

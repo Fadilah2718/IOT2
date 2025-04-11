@@ -1,0 +1,108 @@
+[
+    {
+        "id": "02add7f30119a074",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "3cee6f15f5f61ecd",
+        "type": "debug",
+        "z": "02add7f30119a074",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 740,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "c98d02a9b537b772",
+        "type": "rpi-srf",
+        "z": "02add7f30119a074",
+        "name": "",
+        "topic": "SRF",
+        "pulse": "0.5",
+        "pins": "16,18",
+        "precision": "0",
+        "x": 370,
+        "y": 300,
+        "wires": [
+            [
+                "3b69066e7148af65"
+            ]
+        ]
+    },
+    {
+        "id": "3b69066e7148af65",
+        "type": "function",
+        "z": "02add7f30119a074",
+        "name": "function 1",
+        "func": "let echo_time = msg.payload;  \nlet distance = (echo_time * 34300) / 20000;  \nmsg.payload = {\n    \"distance\": distance,\n    \"motion_detected\": (distance < 200) ? 1 : 0,\n    \"time\": new Date().getTime()\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 560,
+        "y": 380,
+        "wires": [
+            [
+                "3cee6f15f5f61ecd",
+                "6ca5b6e270921f8a"
+            ]
+        ]
+    },
+    {
+        "id": "6ca5b6e270921f8a",
+        "type": "regression",
+        "z": "02add7f30119a074",
+        "name": "regression",
+        "dataSetSize": 0,
+        "regressionType": "logarithmic",
+        "polynomialOrder": "1",
+        "precision": 2,
+        "xInputField": "payload.distance",
+        "xInputFieldType": "msg",
+        "yInputField": "payload.time",
+        "yInputFieldType": "msg",
+        "yOutputField": "topic",
+        "yOutputFieldType": "msg",
+        "functionOutputField": "string",
+        "functionOutputFieldType": "msg",
+        "resultOnly": false,
+        "x": 750,
+        "y": 300,
+        "wires": [
+            [
+                "149fc5c79fc34183"
+            ]
+        ]
+    },
+    {
+        "id": "149fc5c79fc34183",
+        "type": "debug",
+        "z": "02add7f30119a074",
+        "name": "debug 2",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 940,
+        "y": 300,
+        "wires": []
+    }
+]

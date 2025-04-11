@@ -1,0 +1,266 @@
+[
+    {
+        "id": "7d943af9ca2c4e51",
+        "type": "tab",
+        "label": "Flow 4",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "d7700c354c6da0d3",
+        "type": "inject",
+        "z": "7d943af9ca2c4e51",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 120,
+        "wires": [
+            [
+                "9d61232bea63cc0d"
+            ]
+        ]
+    },
+    {
+        "id": "9d61232bea63cc0d",
+        "type": "file in",
+        "z": "7d943af9ca2c4e51",
+        "name": "Data",
+        "filename": "C:/Users/Fadilah Thasnim/Desktop/Academics/8 - Semester/1. IOT/Lab/Dataset/crop_yield.csv",
+        "filenameType": "str",
+        "format": "lines",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "allProps": false,
+        "x": 230,
+        "y": 200,
+        "wires": [
+            [
+                "baedf60e56d03196"
+            ]
+        ]
+    },
+    {
+        "id": "baedf60e56d03196",
+        "type": "csv",
+        "z": "7d943af9ca2c4e51",
+        "name": "",
+        "spec": "rfc",
+        "sep": ",",
+        "hdrin": true,
+        "hdrout": "none",
+        "multi": "one",
+        "ret": "\\r\\n",
+        "temp": "",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": "",
+        "include_null_values": "",
+        "x": 330,
+        "y": 260,
+        "wires": [
+            [
+                "56578fbe9acab506",
+                "619e67c5e6a6e654"
+            ]
+        ]
+    },
+    {
+        "id": "56578fbe9acab506",
+        "type": "function",
+        "z": "7d943af9ca2c4e51",
+        "name": "multiple",
+        "func": "/*\n// Check if msg.payload is an object\nif (msg.payload && typeof msg.payload === \"object\") {\n    // Extract values from the row\n    let area = parseFloat(msg.payload.Area) || 0;\n    let production = parseFloat(msg.payload.Production) || 0;\n    let rainfall = parseFloat(msg.payload.Annual_Rainfall) || 0;\n    let fertilizer = parseFloat(msg.payload.Fertilizer) || 0;\n    let pesticide = parseFloat(msg.payload.Pesticide) || 0;\n\n    // Calculate the predicted yield using the given equation\n    let predictedYield = -71.05 + (0.0020 * area) + (0.1977 * production) + (0.1008 * rainfall) + (0.0101 * fertilizer) + (0.0010 * pesticide);\n\n    // Add predicted yield to the row\n    msg.payload.Predicted_Yield = predictedYield;\n} else {\n    // If msg.payload is not an object, log the error\n    node.error(\"Expected an object but received: \" + typeof msg.payload + \", value: \" + JSON.stringify(msg.payload));\n}\n\n// Return the modified payload\nreturn msg;\n*/\n// Check if msg.payload is an object\nif (msg.payload && typeof msg.payload === \"object\") {\n    // Extract values from the row\n    let area = parseFloat(msg.payload.Area) || 0;\n    let production = parseFloat(msg.payload.Production) || 0;\n    let rainfall = parseFloat(msg.payload.Annual_Rainfall) || 0;\n    let fertilizer = parseFloat(msg.payload.Fertilizer) || 0;\n    let pesticide = parseFloat(msg.payload.Pesticide) || 0;\n\n    // Calculate the predicted yield using the given equation\n    let predictedYield = -71.05 + (0.0020 * area) + (0.1977 * production) +\n        (0.1008 * rainfall) + (0.0101 * fertilizer) +\n        (0.0010 * pesticide);\n\n    // Only return the predicted yield in the payload\n    msg.payload = predictedYield;\n} else {\n    // If msg.payload is not an object, log the error\n    node.error(\"Expected an object but received: \" + typeof msg.payload + \", value: \" + JSON.stringify(msg.payload));\n    msg.payload = null; // Or undefined, depending on use case\n}\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 500,
+        "y": 300,
+        "wires": [
+            [
+                "cb6a903dd40739e0",
+                "34f745854a047146"
+            ]
+        ]
+    },
+    {
+        "id": "cb6a903dd40739e0",
+        "type": "debug",
+        "z": "7d943af9ca2c4e51",
+        "name": "debug 18",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 660,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "bf58ccd4b0022079",
+        "type": "debug",
+        "z": "7d943af9ca2c4e51",
+        "name": "debug 19",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 660,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "619e67c5e6a6e654",
+        "type": "function",
+        "z": "7d943af9ca2c4e51",
+        "name": "Simple",
+        "func": "let aValue = msg.payload.Area;\nlet pValue = msg.payload.Production;\nlet rValue = msg.payload.Annual_Rainfall;\nlet fValue = msg.payload.Fertilizer;\nlet peValue = msg.payload.Pesticide;\n\nlet yValue = msg.payload.Yield;\n\ncontext.history = context.history || [];\ncontext.history.push(peValue);\n\nlet sum = context.history.reduce((a,b)=>a+b,0);\n\nlet avg = sum/context.history.length;\n\nmsg.payload = (avg);\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 490,
+        "y": 200,
+        "wires": [
+            [
+                "bf58ccd4b0022079",
+                "e90899fa7fdc612d"
+            ]
+        ]
+    },
+    {
+        "id": "e90899fa7fdc612d",
+        "type": "ui_chart",
+        "z": "7d943af9ca2c4e51",
+        "name": "",
+        "group": "56903525092be6fe",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "label": "chart",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "Y-M-D",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "10000",
+        "ymax": "60000",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "604800",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": true,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 650,
+        "y": 220,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "34f745854a047146",
+        "type": "ui_chart",
+        "z": "7d943af9ca2c4e51",
+        "name": "",
+        "group": "56903525092be6fe",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "label": "chart",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "Y-M-D",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "10000",
+        "ymax": "50000",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "604800",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": true,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 670,
+        "y": 340,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "56903525092be6fe",
+        "type": "ui_group",
+        "name": "Group 1",
+        "tab": "16f0f532f0194c81",
+        "order": 1,
+        "disp": true,
+        "width": 6
+    },
+    {
+        "id": "16f0f532f0194c81",
+        "type": "ui_tab",
+        "name": "LinearCyn",
+        "icon": "dashboard",
+        "order": 5,
+        "disabled": false,
+        "hidden": false
+    }
+]

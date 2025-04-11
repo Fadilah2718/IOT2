@@ -1,0 +1,113 @@
+[
+    {
+        "id": "9c6b67edeb7d6311",
+        "type": "tab",
+        "label": "Flow 50",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "545045e7506a5211",
+        "type": "inject",
+        "z": "9c6b67edeb7d6311",
+        "name": "inject",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"data\":[[22,60],[20,55],[18,50],[30,70],[21,58],[23,62],[26,68]]}",
+        "payloadType": "json",
+        "x": 330,
+        "y": 220,
+        "wires": [
+            [
+                "24628dd9836f0484"
+            ]
+        ]
+    },
+    {
+        "id": "24628dd9836f0484",
+        "type": "function",
+        "z": "9c6b67edeb7d6311",
+        "name": "K-Means Clustering",
+        "func": "const data = msg.payload.data;\nconst k = 2;\nconst maxIterations = 10;\n\nlet centroids = data.slice(0, k);\n\n// absolute distance\nfunction distance(a, b) {\n    return a.reduce((sum, val, i) => sum + Math.abs(val - b[i]), 0);\n}\n\nlet assignments = [];\n\nfor (let i = 0; i < maxIterations; i++) {\n    let clusters = Array.from({ length: k }, () => []);\n    assignments = [];\n\n    data.forEach(point => {\n        let distances = centroids.map(c => distance(point, c));\n        let clusterIndex = distances.indexOf(Math.min(...distances));\n        clusters[clusterIndex].push(point);\n        assignments.push({ x: point[0], y: point[1], cluster: clusterIndex });\n    });\n\n    centroids = clusters.map(cluster => {\n        let len = cluster.length;\n        if (len === 0) return Array(data[0].length).fill(0);\n        let sum = cluster.reduce((acc, point) => {\n            return acc.map((val, idx) => val + point[idx]);\n        }, Array(data[0].length).fill(0));\n        return sum.map(val => val / len);\n    });\n}\n\nmsg.debug = {\n    finalCentroids: centroids,\n    assignments: assignments\n};\n\nmsg.payload = assignments;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 560,
+        "y": 220,
+        "wires": [
+            [
+                "2443d2f0cd598154",
+                "967c9f6d1dda2445"
+            ]
+        ]
+    },
+    {
+        "id": "2443d2f0cd598154",
+        "type": "debug",
+        "z": "9c6b67edeb7d6311",
+        "name": "Show Clusters in Debug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 810,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "967c9f6d1dda2445",
+        "type": "ui_template",
+        "z": "9c6b67edeb7d6311",
+        "group": "8fb3b77c5d35bb88",
+        "name": "K-Means Table",
+        "order": 0,
+        "width": "0",
+        "height": "0",
+        "format": "<!DOCTYPE html>\n<html>\n\n<head>\n    <title>Scatter Plot - Temperature vs Humidity</title>\n    <script src=\"https://cdn.jsdelivr.net/npm/chart.js\"></script>\n    <style>\n        body {\n            font-family: Arial, sans-serif;\n            text-align: center;\n        }\n\n        #chartContainer {\n            width: 80%;\n            margin: auto;\n        }\n\n        table {\n            width: 60%;\n            margin: 20px auto;\n            border-collapse: collapse;\n        }\n\n        th,\n        td {\n            border: 1px solid #ddd;\n            padding: 8px;\n            text-align: center;\n        }\n\n        th {\n            background-color: #4CAF50;\n            color: white;\n        }\n    </style>\n</head>\n\n<body>\n    <h1>Scatter Plot - Temperature vs Humidity</h1>\n\n    <div id=\"chartContainer\">\n        <canvas id=\"scatterChart\"></canvas>\n    </div>\n\n    <h2>Data Table</h2>\n    <table id=\"dataTable\">\n        <thead>\n            <tr>\n                <th>Temperature (°C)</th>\n                <th>Humidity (%)</th>\n                <th>Cluster</th>\n            </tr>\n        </thead>\n        <tbody>\n            <!-- Data rows will be inserted here by Node-RED -->\n        </tbody>\n    </table>\n\n    <script>\n(function(scope) {\n    scope.$watch('msg', function(msg) {\n        if (msg && msg.payload) {\n            const data = msg.payload;\n\n            // Update Table\n            const tableBody = document.getElementById('dataTable').querySelector('tbody');\n            tableBody.innerHTML = ''; // Clear existing rows\n            data.forEach(point => {\n                const row = tableBody.insertRow();\n                row.insertCell(0).textContent = point.x;\n                row.insertCell(1).textContent = point.y;\n                row.insertCell(2).textContent = point.cluster;\n            });\n\n            // Update Chart\n            const clusterColors = ['rgba(255,99,132,0.8)', 'rgba(54,162,235,0.8)', 'rgba(255, 206, 86, 0.8)', 'rgba(75, 192, 192, 0.8)', 'rgba(153, 102, 255, 0.8)']; // Add more if needed\n            const borderColors = ['rgba(255,99,132,1)', 'rgba(54,162,235,1)', 'rgba(255, 206, 86, 1)', 'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)'];\n            const uniqueClusters = [...new Set(data.map(item => item.cluster))].sort();\n\n            const datasets = uniqueClusters.map(clusterIndex => {\n                const clusterData = data.filter(point => point.cluster === clusterIndex);\n                return {\n                    label: 'Cluster ' + clusterIndex,\n                    data: clusterData.map(point => ({ x: point.x, y: point.y })),\n                    backgroundColor: clusterColors[clusterIndex % clusterColors.length],\n                    borderColor: borderColors[clusterIndex % borderColors.length],\n                    pointRadius: 5\n                };\n            });\n\n            const ctx = document.getElementById('scatterChart').getContext('2d');\n            // Destroy existing chart instance if it exists\n            if (window.myScatterChart) {\n                window.myScatterChart.destroy();\n            }\n            window.myScatterChart = new Chart(ctx, {\n                type: 'scatter',\n                data: {\n                    datasets\n                },\n                options: {\n                    responsive: true,\n                    plugins: {\n                        legend: {\n                            position: 'top'\n                        },\n                        tooltip: {\n                             callbacks: {\n                                label: function(context) {\n                                    let label = context.dataset.label || '';\n                                    if (label) {\n                                        label += ': ';\n                                    }\n                                    if (context.parsed.x !== null) {\n                                        label += 'Temp: ' + context.parsed.x + '°C';\n                                    }\n                                    if (context.parsed.y !== null) {\n                                        label += ', Hum: ' + context.parsed.y + '%';\n                                    }\n                                    return label;\n                                }\n                            }\n                        }\n                    },\n                    scales: {\n                        x: { // Use 'x' instead of 'xAxis'\n                            type: 'linear',\n                            position: 'bottom',\n                            title: {\n                                display: true,\n                                text: 'Temperature (°C)'\n                            }\n                        },\n                        y: { // Use 'y' instead of 'yAxis'\n                            title: {\n                                display: true,\n                                text: 'Humidity (%)'\n                            }\n                        }\n                    }\n                }\n            });\n        }\n    });\n})(scope);\n    </script>\n</body>\n\n</html>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 820,
+        "y": 260,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "8fb3b77c5d35bb88",
+        "type": "ui_group",
+        "name": "K-Means Results",
+        "tab": "b2ca583139859455",
+        "order": 1,
+        "disp": true,
+        "width": "12",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "b2ca583139859455",
+        "type": "ui_tab",
+        "name": "Dashboard",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    }
+]

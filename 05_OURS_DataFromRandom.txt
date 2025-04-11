@@ -1,0 +1,136 @@
+[
+    {
+        "id": "1687a2cc965b8ae4",
+        "type": "tab",
+        "label": "Flow 2",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "c14ff6199f02d35a",
+        "type": "inject",
+        "z": "1687a2cc965b8ae4",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 100,
+        "y": 180,
+        "wires": [
+            [
+                "74669edd5fa52cbf"
+            ]
+        ]
+    },
+    {
+        "id": "74669edd5fa52cbf",
+        "type": "function",
+        "z": "1687a2cc965b8ae4",
+        "name": "function 1",
+        "func": "const randomNumber = Math.floor(Math.random() * 100) + 1;\nfunction getCurrentDateTime() {\n  const now = new Date();\n\n  const hours = String(now.getHours()).padStart(2, '0');\n  const minutes = String(now.getMinutes()).padStart(2, '0');\n  const seconds = String(now.getSeconds()).padStart(2, '0');\n\n  const day = String(now.getDate()).padStart(2, '0');\n  const month = String(now.getMonth() + 1).padStart(2, '0');\n  const year = now.getFullYear();\n\n  return `${hours}:${minutes}:${seconds}-${day}:${month}:${year}`;\n}\n\nconst currentDateTime = getCurrentDateTime();\nconst message = {\n    value: randomNumber,\n    date : currentDateTime\n}\n\nmsg.payload = message;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 200,
+        "y": 240,
+        "wires": [
+            [
+                "f19cb3f5ce7d5ced",
+                "7f6a65ea2a802074"
+            ]
+        ]
+    },
+    {
+        "id": "f19cb3f5ce7d5ced",
+        "type": "debug",
+        "z": "1687a2cc965b8ae4",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 280,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "90945bb88a7ecde4",
+        "type": "debug",
+        "z": "1687a2cc965b8ae4",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 680,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "d954ad9859ccad71",
+        "type": "file",
+        "z": "1687a2cc965b8ae4",
+        "name": "Dataset",
+        "filename": "C:/Users/Fadilah Thasnim/Desktop/Academics/8 - Semester/1. IOT/Lab/Dataset/text.csv",
+        "filenameType": "str",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 540,
+        "y": 320,
+        "wires": [
+            [
+                "90945bb88a7ecde4"
+            ]
+        ]
+    },
+    {
+        "id": "7f6a65ea2a802074",
+        "type": "csv",
+        "z": "1687a2cc965b8ae4",
+        "name": "",
+        "spec": "rfc",
+        "sep": ",",
+        "hdrin": "",
+        "hdrout": "once",
+        "multi": "one",
+        "ret": "\\r\\n",
+        "temp": "value,date",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": "",
+        "include_null_values": "",
+        "x": 390,
+        "y": 240,
+        "wires": [
+            [
+                "d954ad9859ccad71"
+            ]
+        ]
+    }
+]

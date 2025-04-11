@@ -1,0 +1,189 @@
+[
+    {
+        "id": "b8187379e342707a",
+        "type": "tab",
+        "label": "K-Means Clustering",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "e78215373dfa7134",
+        "type": "inject",
+        "z": "b8187379e342707a",
+        "name": "Start ",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": "",
+        "topic": "",
+        "x": 170,
+        "y": 120,
+        "wires": [
+            [
+                "9cf5c0dc0fa30fbc"
+            ]
+        ]
+    },
+    {
+        "id": "9cf5c0dc0fa30fbc",
+        "type": "file in",
+        "z": "b8187379e342707a",
+        "name": "Read CSV ",
+        "filename": "C:/Users/Fadilah Thasnim/Downloads/unlabeled_crop.csv",
+        "filenameType": "str",
+        "format": "utf8",
+        "allProps": false,
+        "x": 250,
+        "y": 180,
+        "wires": [
+            [
+                "12b223c623fe2577"
+            ]
+        ]
+    },
+    {
+        "id": "12b223c623fe2577",
+        "type": "csv",
+        "z": "b8187379e342707a",
+        "name": "Convert CSV to JSON",
+        "sep": ",",
+        "hdrin": true,
+        "hdrout": "none",
+        "multi": "mult",
+        "ret": "\\n",
+        "temp": "",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": false,
+        "include_null_values": false,
+        "x": 380,
+        "y": 240,
+        "wires": [
+            [
+                "7e533ccd3b4b79f7"
+            ]
+        ]
+    },
+    {
+        "id": "ca8b695ff3fde324",
+        "type": "ui_numeric",
+        "z": "b8187379e342707a",
+        "name": "Select K",
+        "label": "Number of Clusters (K)",
+        "tooltip": "",
+        "group": "cb18eb73aa60443d",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "wrap": false,
+        "passthru": true,
+        "topic": "k",
+        "topicType": "str",
+        "format": "",
+        "min": 2,
+        "max": 10,
+        "step": 1,
+        "className": "",
+        "x": 260,
+        "y": 440,
+        "wires": [
+            [
+                "355228b99bddeac2"
+            ]
+        ]
+    },
+    {
+        "id": "355228b99bddeac2",
+        "type": "change",
+        "z": "b8187379e342707a",
+        "name": "Store K",
+        "rules": [
+            {
+                "t": "set",
+                "p": "k",
+                "pt": "msg",
+                "to": "payload",
+                "tot": "str"
+            }
+        ],
+        "x": 500,
+        "y": 440,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7e533ccd3b4b79f7",
+        "type": "function",
+        "z": "b8187379e342707a",
+        "name": "K-Means Clustering",
+        "func": "const k = flow.get(\"k\") || 3;\nlet dataset = msg.payload;\n\nif (typeof dataset === \"string\") {\n    try {\n        dataset = JSON.parse(dataset);\n    } catch (error) {\n        node.error(\"Invalid JSON format in msg.payload\", msg);\n        return null;\n    }\n}\nif (!Array.isArray(dataset)) {\n    node.error(\"Dataset is not an array\", msg);\n    return null;\n}\nconst soilMapping = { \"loamy\": 1, \"clay\": 2, \"silty\": 3, \"sandy\": 4 };\n\ndataset = dataset.map(item => ({\n    soil: soilMapping[item.soil] || 0,\n    soil_quality_index: parseFloat(item.soil_quality_index),\n    yield_kg_per_hectare: parseFloat(item.yield_kg_per_hectare),\n    organic_matter_percent: parseFloat(item[\"organic_matter_%\"]),\n    ph_level: parseFloat(item.ph_level),\n    nitrogen: parseFloat(item.nitrogen_ppm),\n    phosphorus: parseFloat(item.phosphorus_ppm),\n    potassium: parseFloat(item.potassium_ppm),\n    moisture_percent: parseFloat(item[\"moisture_%\"]),\n    temperature: parseFloat(item.temperature_C)\n}));\n\nfunction kMeansClustering(features, k) {\n    // This is a placeholder implementation. A real k-means implementation\n    // would involve iterative centroid calculation and assignment.\n    // This just assigns random clusters for demonstration.\n    return new Array(features.length).fill(0).map(() => Math.floor(Math.random() * k));\n}\nlet features = dataset.map(item => [\n    item.soil, item.soil_quality_index, item.yield_kg_per_hectare,\n    item.organic_matter_percent, item.ph_level, item.nitrogen,\n    item.phosphorus, item.potassium, item.moisture_percent, item.temperature\n]);\nlet clusters = kMeansClustering(features, k);\n\ndataset = dataset.map((item, i) => ({ ...item, cluster: clusters[i] }));\n\nnode.warn(dataset); \n\nmsg.payload = dataset;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 530,
+        "y": 300,
+        "wires": [
+            [
+                "e171d5631ff628ed"
+            ]
+        ]
+    },
+    {
+        "id": "e171d5631ff628ed",
+        "type": "ui_table",
+        "z": "b8187379e342707a",
+        "group": "56903525092be6fe",
+        "name": "Clustered Data",
+        "order": 2,
+        "width": "6",
+        "height": "25",
+        "columns": [],
+        "outputs": 0,
+        "cts": false,
+        "x": 680,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "cb18eb73aa60443d",
+        "type": "ui_group",
+        "name": "Soil",
+        "tab": "9b8dc1bdf67be03b",
+        "order": 2,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "56903525092be6fe",
+        "type": "ui_group",
+        "name": "Group 1",
+        "tab": "16f0f532f0194c81",
+        "order": 1,
+        "disp": true,
+        "width": 6
+    },
+    {
+        "id": "9b8dc1bdf67be03b",
+        "type": "ui_tab",
+        "name": "K means",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "16f0f532f0194c81",
+        "type": "ui_tab",
+        "name": "LinearCyn",
+        "icon": "dashboard",
+        "order": 5,
+        "disabled": false,
+        "hidden": false
+    }
+]
